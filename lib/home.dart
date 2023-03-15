@@ -1,5 +1,6 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import 'room.dart';
@@ -16,6 +17,17 @@ class _HomePageState extends State<HomePage> {
   final _roomID = TextEditingController();
   final _userName = TextEditingController();
 
+  static const _chars = 'abcdefghijklmnopqrstuvwxyz1234567890';
+
+  String randomStr(int length) {
+    return String.fromCharCodes(
+      Iterable.generate(
+        length,
+        (_) => _chars.codeUnitAt(Random().nextInt(_chars.length)),
+      ),
+    );
+  }
+
   Future fetchRoomData(String roomID) async {
     String url = 'http://127.0.0.1:4399/msg/$roomID';
     await http.get(Uri.parse(url)).then((res) {
@@ -24,7 +36,7 @@ class _HomePageState extends State<HomePage> {
           context,
           MaterialPageRoute(
             builder: (context) => ChatRoomPage(
-              roomID: int.parse(_roomID.text),
+              roomID: roomID,
               userName: _userName.text,
             ),
           ),
@@ -41,7 +53,7 @@ class _HomePageState extends State<HomePage> {
               content: const Text('ห้องเต็ม'),
               actions: [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.pop(context),
                   child: const Text('Okay!'),
                 )
               ],
@@ -55,54 +67,52 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _roomID,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Type Room Number',
-                      ),
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _roomID,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Type Room Number',
                     ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _userName,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Type Your Name',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Enter yourname';
-                        }
-                        return null;
-                      },
-                    )
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: _userName,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Type Your Name',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Enter yourname';
+                      }
+                      return null;
+                    },
+                  )
+                ],
               ),
-              const SizedBox(height: 50),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
+            ),
+            const SizedBox(height: 50),
+            ElevatedButton(
+              onPressed: () async {
+                if (_formKey.currentState!.validate()) {
+                  if (_roomID.text.isNotEmpty) {
                     return await fetchRoomData(_roomID.text);
                   }
-                },
-                child: const Text('go'),
-              )
-            ],
-          ),
+                  return await fetchRoomData(randomStr(7));
+                }
+              },
+              child: const Text('go'),
+            )
+          ],
         ),
       ),
     );

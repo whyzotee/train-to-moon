@@ -1,13 +1,16 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:traintomoon/provider/chat-store.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'widget/chat/messagebox.dart';
 import 'widget/chat/joinroombox.dart';
 
 class ChatRoomPage extends StatefulWidget {
-  final int roomID;
+  final String roomID;
   final String userName;
 
   const ChatRoomPage({super.key, required this.roomID, required this.userName});
@@ -26,6 +29,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   String? userID;
   List<Map> roomMessage = [];
+  bool showL = false;
+  bool showR = false;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +41,59 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Stack(
+                children: [
+                  Image(
+                    image: const AssetImage('assets/images/train.png'),
+                    height: MediaQuery.of(context).size.height * 0.4,
+                  ),
+                  Consumer(
+                    builder: (
+                      BuildContext context,
+                      UserPosition value,
+                      Widget? child,
+                    ) {
+                      return value.showL
+                          ? Positioned(
+                              left: MediaQuery.of(context).size.height * 0.20,
+                              bottom: MediaQuery.of(context).size.height * 0.13,
+                              child: Image(
+                                image:
+                                    const AssetImage('assets/images/user.png'),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.15,
+                              ),
+                            )
+                          : Container();
+                    },
+                  ),
+                  Consumer(
+                    builder: (
+                      BuildContext context,
+                      UserPosition value,
+                      Widget? child,
+                    ) {
+                      return value.showR
+                          ? Positioned(
+                              right: MediaQuery.of(context).size.height * 0.15,
+                              bottom: MediaQuery.of(context).size.height * 0.13,
+                              child: Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.rotationY(math.pi),
+                                child: Image(
+                                  image: const AssetImage(
+                                    'assets/images/user.png',
+                                  ),
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.15,
+                                ),
+                              ),
+                            )
+                          : Container();
+                    },
+                  )
+                ],
+              ),
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: Text(
@@ -70,22 +128,20 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   Widget chatScreen() {
+    var provider = context.read<UserPosition>();
     return StreamBuilder(
       stream: _channel.stream,
       builder: (context, snapshot) {
         if (snapshot.hasData && userID == null) {
-          var status = jsonDecode(snapshot.data);
-          if (!status["status"]) {
-            return const Text('[ws-server] Error: โปรดติดต่อผู้พัฒนา');
-          }
-
-          userID = status["id"];
+          var userData = jsonDecode(snapshot.data);
+          userID = userData["id"];
 
           if (userID != null) {
             _channel.sink.add(
               jsonEncode({
                 "join": widget.userName,
                 "uuid": userID,
+                "pos": userData["pos"],
               }),
             );
           } else {
@@ -95,6 +151,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
         if (snapshot.hasData) {
           var temp = jsonDecode(snapshot.data);
+          if (temp["pos"] != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              provider.setUserPos(temp["pos"]["L"], temp["pos"]["R"]);
+            });
+          }
+
           roomMessage.add(temp);
 
           return Expanded(

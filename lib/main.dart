@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:traintomoon/home.dart';
+import 'package:provider/provider.dart';
+
+import 'home.dart';
+import 'provider/chat-store.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,9 +13,12 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomePage(),
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (context) => UserPosition())],
+      child: const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: HomePage(),
+      ),
     );
   }
 }
