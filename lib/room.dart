@@ -6,18 +6,15 @@ import 'package:traintomoon/provider/chat-store.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'widget/chat/messagebox.dart';
-import 'widget/chat/joinroombox.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String roomID;
   final String userName;
-  final bool newServer;
 
   const ChatRoomPage({
     super.key,
     required this.roomID,
     required this.userName,
-    required this.newServer,
   });
 
   @override
@@ -30,14 +27,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final String domain = '127.0.0.1';
   final int port = 4399;
 
-  late String serverUrl =
-      'ws://$domain:$port/msg/channel_!name=${widget.userName}@${widget.roomID}';
-  late String newserverUrl =
-      'ws://$domain:$port/msg/channel_create!name=${widget.userName}@${widget.roomID}';
+  late final String userName = widget.userName;
+  late final String roomID = widget.roomID;
 
-  late final _channel = WebSocketChannel.connect(Uri.parse(
-    widget.newServer ? newserverUrl : serverUrl,
-  ));
+  late String serverUrl = 'ws://$domain:$port/msg/ch@$roomID!name=$userName';
+
+  late final _channel = WebSocketChannel.connect(Uri.parse(serverUrl));
 
   String? userID;
   List<Map> roomMessage = [];
@@ -135,14 +130,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               }),
             );
           } else {
-            _channel.sink.add('[ws-server] Error: โปรดติดต่อผู้พัฒนา');
+            _channel.sink.add({
+              jsonEncode({"error": "[ws-server] Error: โปรดติดต่อผู้พัฒนา"})
+            });
           }
         }
 
         if (snapshot.hasData) {
           print(snapshot.data);
           var temp = jsonDecode(snapshot.data);
-          if ((temp["pos"] != null) || (temp["leave"] != null)) {
+          if (temp["pos"] != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               provider.setUserPos(temp["pos"]["L"], temp["pos"]["R"]);
             });
