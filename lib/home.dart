@@ -38,6 +38,7 @@ class _HomePageState extends State<HomePage> {
             builder: (context) => ChatRoomPage(
               roomID: roomID,
               userName: _userName.text,
+              newServer: false,
             ),
           ),
         );
@@ -49,8 +50,10 @@ class _HomePageState extends State<HomePage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              title: const Text('Error!'),
-              content: const Text('ห้องเต็ม'),
+              title: const Text('เกิดข้อผิดพลาด'),
+              content: res.statusCode == 404
+                  ? const Text('ไม่พบห้อง')
+                  : const Text('ห้องเต็ม'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -60,6 +63,26 @@ class _HomePageState extends State<HomePage> {
             );
           },
         );
+      }
+    });
+  }
+
+  Future fetchCreateRoom(String roomID) async {
+    String url = 'http://127.0.0.1:4399/msg/new/$roomID';
+    await http.get(Uri.parse(url)).then((res) {
+      if (res.statusCode == 201) {
+        return Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoomPage(
+              roomID: roomID,
+              userName: _userName.text,
+              newServer: true,
+            ),
+          ),
+        );
+      } else {
+        return false;
       }
     });
   }
@@ -107,7 +130,7 @@ class _HomePageState extends State<HomePage> {
                   if (_roomID.text.isNotEmpty) {
                     return await fetchRoomData(_roomID.text);
                   }
-                  return await fetchRoomData(randomStr(7));
+                  return await fetchCreateRoom(randomStr(7));
                 }
               },
               child: const Text('go'),

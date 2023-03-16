@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,8 +11,14 @@ import 'widget/chat/joinroombox.dart';
 class ChatRoomPage extends StatefulWidget {
   final String roomID;
   final String userName;
+  final bool newServer;
 
-  const ChatRoomPage({super.key, required this.roomID, required this.userName});
+  const ChatRoomPage({
+    super.key,
+    required this.roomID,
+    required this.userName,
+    required this.newServer,
+  });
 
   @override
   State<ChatRoomPage> createState() => _ChatRoomPageState();
@@ -24,13 +29,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   final String domain = '127.0.0.1';
   final int port = 4399;
-  late String serverUrl = 'ws://$domain:$port/msg/channel@${widget.roomID}';
-  late final _channel = WebSocketChannel.connect(Uri.parse(serverUrl));
+
+  late String serverUrl =
+      'ws://$domain:$port/msg/channel_!name=${widget.userName}@${widget.roomID}';
+  late String newserverUrl =
+      'ws://$domain:$port/msg/channel_create!name=${widget.userName}@${widget.roomID}';
+
+  late final _channel = WebSocketChannel.connect(Uri.parse(
+    widget.newServer ? newserverUrl : serverUrl,
+  ));
 
   String? userID;
   List<Map> roomMessage = [];
-  bool showL = false;
-  bool showR = false;
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +63,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       UserPosition value,
                       Widget? child,
                     ) {
-                      return value.showL
-                          ? Positioned(
-                              left: MediaQuery.of(context).size.height * 0.20,
-                              bottom: MediaQuery.of(context).size.height * 0.13,
-                              child: Image(
-                                image:
-                                    const AssetImage('assets/images/user.png'),
-                                height:
-                                    MediaQuery.of(context).size.height * 0.15,
-                              ),
-                            )
-                          : Container();
+                      if (value.showL) {
+                        return value.showUserLeft(context);
+                      } else {
+                        return Container();
+                      }
                     },
                   ),
                   Consumer(
@@ -73,23 +76,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       UserPosition value,
                       Widget? child,
                     ) {
-                      return value.showR
-                          ? Positioned(
-                              right: MediaQuery.of(context).size.height * 0.15,
-                              bottom: MediaQuery.of(context).size.height * 0.13,
-                              child: Transform(
-                                alignment: Alignment.center,
-                                transform: Matrix4.rotationY(math.pi),
-                                child: Image(
-                                  image: const AssetImage(
-                                    'assets/images/user.png',
-                                  ),
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.15,
-                                ),
-                              ),
-                            )
-                          : Container();
+                      if (value.showR) {
+                        return value.showUserRight(context);
+                      } else {
+                        return Container();
+                      }
                     },
                   )
                 ],
@@ -106,7 +97,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 ),
               ),
               chatScreen(),
-              const SizedBox(height: 24),
               Form(
                 child: TextFormField(
                   controller: _controller,
@@ -150,8 +140,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         }
 
         if (snapshot.hasData) {
+          print(snapshot.data);
           var temp = jsonDecode(snapshot.data);
-          if (temp["pos"] != null) {
+          if ((temp["pos"] != null) || (temp["leave"] != null)) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               provider.setUserPos(temp["pos"]["L"], temp["pos"]["R"]);
             });
@@ -167,7 +158,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 if (roomMessage[index]["id"] != null) {
                   return Container();
                 } else if (roomMessage[index]["join"] != null) {
-                  return JoinRoomBox(allMessage: roomMessage, index: index);
+                  return Text('${roomMessage[index]["join"]} เข้าร่วมห้อง');
+                } else if (roomMessage[index]["leave"] != null) {
+                  return Text('${roomMessage[index]["leave"]} ออกห้อง');
                 } else {
                   return MessageBox(
                     isSender: roomMessage[index]["uuid"] == userID,
@@ -180,7 +173,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           );
         } else {
-          return Container();
+          return Expanded(child: Container());
         }
       },
     );
