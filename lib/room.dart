@@ -22,6 +22,7 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
+  final ScrollController _scrollcontroller = ScrollController();
   final TextEditingController _controller = TextEditingController();
 
   final String domain =
@@ -45,10 +46,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Stack(
+                alignment: AlignmentDirectional.center,
                 children: [
                   Image(
                     image: const AssetImage('assets/images/train.png'),
@@ -97,6 +97,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               Form(
                 child: TextFormField(
                   controller: _controller,
+                  onFieldSubmitted: (value) {
+                    if (value.isNotEmpty) {
+                      _sendMessage();
+                    }
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Type Some thing',
                   ),
@@ -146,10 +151,17 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             });
           }
 
-          roomMessage.add(temp);
+          if (roomMessage.length > 1) {
+            print(roomMessage.length);
+            _scrollcontroller.jumpTo(0);
+          }
+
+          roomMessage.insert(0, temp);
 
           return Expanded(
             child: ListView.builder(
+              reverse: true,
+              controller: _scrollcontroller,
               physics: const BouncingScrollPhysics(),
               itemCount: roomMessage.length,
               itemBuilder: (BuildContext context, int index) {
