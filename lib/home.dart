@@ -31,7 +31,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future fetchRoomData(String roomID) async {
-    String url = 'http://127.0.0.1:4399/msg/$roomID';
+    String url =
+        'https://3411-2001-fb1-10c-c12e-85f2-6bb1-72d7-c057.ap.ngrok.io/msg/$roomID';
     await http.get(Uri.parse(url)).then((res) {
       if (res.statusCode == 200) {
         return Navigator.pushReplacement(
@@ -69,7 +70,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future fetchCreateRoom(String roomID) async {
-    String url = 'http://127.0.0.1:4399/msg/new/$roomID';
+    String url =
+        'https://3411-2001-fb1-10c-c12e-85f2-6bb1-72d7-c057.ap.ngrok.io/msg/new/$roomID';
     await http.get(Uri.parse(url)).then((res) {
       if (res.statusCode == 200) {
         var room = jsonDecode(res.body);
@@ -106,7 +108,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             Form(
                 key: _formKey,
                 child: TextFormField(
@@ -134,31 +136,37 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 50),
             const Text('หรือ ใส่เลขห้องเพื่อเข้าร่วมห้องกับเพื่อนของคุณ'),
             const SizedBox(height: 50),
-            Form(
-              key: _joinFormKey,
-              child: TextFormField(
-                controller: _roomID,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Type Room Number',
-                  suffixIcon: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        if (_joinFormKey.currentState!.validate()) {
-                          return await fetchRoomData(_roomID.text);
+            Row(
+              children: <Widget>[
+                Flexible(
+                  child: Form(
+                    key: _joinFormKey,
+                    child: TextFormField(
+                      controller: _roomID,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Type Room Number',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Enter Room Name';
                         }
-                      }
-                    },
-                    child: const Text('Join'),
+                        return null;
+                      },
+                    ),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter Room Name';
-                  }
-                  return null;
-                },
-              ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      if (_joinFormKey.currentState!.validate()) {
+                        return await fetchRoomData(_roomID.text);
+                      }
+                    }
+                  },
+                  child: const Text('Join'),
+                ),
+              ],
             ),
           ],
         ),

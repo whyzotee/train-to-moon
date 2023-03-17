@@ -24,13 +24,14 @@ class ChatRoomPage extends StatefulWidget {
 class _ChatRoomPageState extends State<ChatRoomPage> {
   final TextEditingController _controller = TextEditingController();
 
-  final String domain = '127.0.0.1';
+  final String domain =
+      '3411-2001-fb1-10c-c12e-85f2-6bb1-72d7-c057.ap.ngrok.io';
   final int port = 4399;
 
   late final String userName = widget.userName;
   late final String roomID = widget.roomID;
 
-  late String serverUrl = 'ws://$domain:$port/msg/ch@$roomID!name=$userName';
+  late String serverUrl = 'wss://$domain/msg/ch@$roomID!name=$userName';
 
   late final _channel = WebSocketChannel.connect(Uri.parse(serverUrl));
 
@@ -45,7 +46,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
               Stack(
                 children: [
                   Image(
@@ -137,7 +139,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         }
 
         if (snapshot.hasData) {
-          print(snapshot.data);
           var temp = jsonDecode(snapshot.data);
           if (temp["pos"] != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {

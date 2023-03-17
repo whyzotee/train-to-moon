@@ -1,0 +1,12 @@
+{
+  "name": "train-to-moon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "flutter build web"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
